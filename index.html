@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wildfire Across the West</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">DSC 106 &middot; Project 3 &middot; Checkpoint &middot; GOES fire detections</p>
+      <h1>Wildfire across the West, hour by hour</h1>
+      <p class="lede">Exploring what a geostationary satellite sees of a fire season: how much power the fires put out, what time of day they burn, and how far they run.</p>
+      <p class="note" id="data-note"></p>
+    </header>
+
+    <div class="filters" role="group" aria-label="Filters for all graphs">
+      <label class="field">
+        <span>Fire</span>
+        <select id="fire-select"></select>
+      </label>
+      <p class="scope" id="scope-label" aria-live="polite"></p>
+    </div>
+
+    <section class="card" aria-labelledby="g4-title">
+      <div class="card-head">
+        <span class="num">4</span>
+        <h2 id="g4-title">How much power were the fires putting out?</h2>
+      </div>
+      <p class="sub">Total fire radiative power, averaged over the scans in each hour. Power is a rate, so scans are averaged rather than summed. Single-scan false alarms are removed.</p>
+      <div class="chart-tools">
+        <div class="segmented" id="mode-toggle" role="radiogroup" aria-label="Power measure">
+          <button type="button" role="radio" data-mode="filled" aria-checked="true">Gap-filled</button>
+          <button type="button" role="radio" data-mode="reported" aria-checked="false">Reported only</button>
+        </div>
+        <div class="presets">
+          <button type="button" class="chip" id="zoom-busiest">Busiest 3 days</button>
+          <button type="button" class="chip" id="zoom-reset">Full period</button>
+        </div>
+      </div>
+      <div id="intensity" class="chart"></div>
+      <p class="hint">Drag across the lower strip to zoom. The hour-of-day chart below follows the same window.</p>
+      <p class="finding" id="intensity-finding"></p>
+    </section>
+
+    <section class="card" aria-labelledby="g5-title">
+      <div class="card-head">
+        <span class="num">5</span>
+        <h2 id="g5-title">What time of day do fires burn, and when can the satellite measure them?</h2>
+      </div>
+      <p class="sub">Average fire pixels per scan at each solar hour, within the selected window. A pixel without a power value still counts as a detection.</p>
+      <div class="legend">
+        <span><i class="swatch swatch-power"></i>Has a power value</span>
+        <span><i class="swatch swatch-nopower"></i>Fire pixel, no power value</span>
+        <span><i class="swatch swatch-night"></i>Night</span>
+      </div>
+      <div id="hours" class="chart"></div>
+      <p class="finding" id="hours-finding"></p>
+    </section>
+
+    <section class="card" aria-labelledby="g6-title">
+      <div class="card-head">
+        <span class="num">6</span>
+        <h2 id="g6-title">How fast does a fire run from where it started?</h2>
+      </div>
+      <p class="sub">Farthest pixel connected to each fire's official point of origin, by days since discovery. Pixels from separate starts inside the final perimeter do not count until they link up. Steps of about 3 km are the size of one satellite pixel.</p>
+      <div class="chart-tools">
+        <div class="segmented" id="spread-range" role="radiogroup" aria-label="Days shown">
+          <button type="button" role="radio" data-days="21" aria-checked="true">First 3 weeks</button>
+          <button type="button" role="radio" data-days="0" aria-checked="false">All days</button>
+        </div>
+        <div class="legend">
+          <span><i class="swatch swatch-ring"></i>Linked with a separate start, so this step is not a run</span>
+        </div>
+      </div>
+      <div class="spread-layout">
+        <div id="spread" class="chart"></div>
+        <table class="fire-table" id="fire-table">
+          <thead><tr><th scope="col">Fire</th><th scope="col" class="n">Fastest 6 h</th><th scope="col" class="n">Farthest</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="hint">Select a line or a table row to focus graphs 4 and 5 on that fire.</p>
+      <p class="finding" id="spread-finding"></p>
+    </section>
+
+    <footer class="note" id="method-note"></footer>
+  </main>
+
+  <div id="tooltip" class="tooltip" role="status" hidden></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
