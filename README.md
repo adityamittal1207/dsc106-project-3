@@ -17,35 +17,41 @@ VS Code Live Server also works. D3 v7 is the only plotting library, and it loads
 
 ## The data
 
-| | |
-|---|---|
-| Source | [NOAA GOES on AWS](https://registry.opendata.aws/noaa-goes/) (public, no account needed) |
-| Satellite | GOES-18 (bucket `noaa-goes18`), sitting at 137°W |
-| Product | `ABI-L2-FDCC`, Fire/Hot Spot Characterization, CONUS sector, one file every 5 minutes |
-| Subset used | Pixels flagged as fire inside 125–110°W, 35–49.5°N |
-| Period | 2026-07-13 to 2026-08-31 |
-| Volume | 14,391 of 14,400 possible scans, 522,491 fire pixels, 30 MB as CSV, 125 KB as page data |
+
+|             |                                                                                                 |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| Source      | [NOAA GOES on AWS](https://registry.opendata.aws/noaa-goes/) (public, no account needed)        |
+| Satellite   | GOES-18 (bucket `noaa-goes18`), sitting at 137°W                                                |
+| Product     | `ABI-L2-FDCC`, Fire/Hot Spot Characterization, CONUS sector, one file every 5 minutes           |
+| Subset used | Pixels flagged as fire inside 125–110°W, 35–49.5°N (Northwest United States and nearby regions) |
+| Period      | 2026-07-13 to 2026-08-31                                                                        |
+| Volume      | 14,391 of 14,400 possible scans, 522,491 fire pixels, 30 MB as CSV, 125 KB as page data         |
+
 
 Files are stored as `<Product>/<Year>/<Day of Year>/<Hour>/<Filename>`. Each hour holds 12 `FDCC` files
 or 6 `FDCF` files. The filename contains the scan start time, for example `s20262062101181` is year 2026,
 day 206, 21:01:18.1 UTC.
 
-**Why GOES-18 `FDCC`.** The demo notebook and the example prefix point at the Full Disk product.
+**Why GOES-18** `FDCC`**.** The demo notebook and the example prefix point at the Full Disk product.
 Both work, but for the West this pairing is better:
 
-| | GOES-18 `FDCC` | GOES-19 `FDCF` |
-|---|---|---|
-| Scan interval | 5 min | 10 min |
-| View angle at central Oregon | about 54° | about 68° (pixels stretch much more) |
+
+|                              | GOES-18 `FDCC` | GOES-19 `FDCF`                       |
+| ---------------------------- | -------------- | ------------------------------------ |
+| Scan interval                | 5 min          | 10 min                               |
+| View angle at central Oregon | about 54°      | about 68° (pixels stretch much more) |
+
 
 **Variables used**
 
-| Variable | Meaning | Used for |
-|---|---|---|
-| `Mask` | Category of each pixel. Fire codes are 10–15 and 30–35 | Finding fire pixels, cloud flags |
-| `Power` | Fire radiative power in MW. Empty for cloud-flagged and low-probability pixels | Graphs 4 and 5 |
-| `x`, `y`, `goes_imager_projection` | Scan angles and satellite geometry | Converting to latitude and longitude |
-| Filename `s...` | Scan start time | All time axes |
+
+| Variable                           | Meaning                                                                        | Used for                             |
+| ---------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
+| `Mask`                             | Category of each pixel. Fire codes are 10–15 and 30–35                         | Finding fire pixels, cloud flags     |
+| `Power`                            | Fire radiative power in MW. Empty for cloud-flagged and low-probability pixels | Graphs 4 and 5                       |
+| `x`, `y`, `goes_imager_projection` | Scan angles and satellite geometry                                             | Converting to latitude and longitude |
+| Filename `s...`                    | Scan start time                                                                | All time axes                        |
+
 
 `Temp`, `Area` and `DQF` are also extracted but no graph uses them yet.
 
@@ -68,6 +74,8 @@ keys = fs.ls("noaa-goes18/ABI-L2-FDCC/2026/206/21/")
 with netCDF4.Dataset("mem.nc", memory=fs.cat(keys[0])) as nc:
     mask, power = nc["Mask"][:], nc["Power"][:]
 ```
+
+
 
 ## Rebuilding the data
 
@@ -102,25 +110,29 @@ time and final outline, and is only used to attribute pixels to fires for Graph 
 1. **Remove false alarms.** A pixel is dropped unless the same pixel fires again within 2 hours. This keeps 96% of pixels.
 2. **Convert to local solar time** (UTC + longitude / 15), so 15:00 means the same sun position across the West.
 3. **Gap-fill power.** Cloud-flagged pixels (`Mask` 12, 32) get the mean power of valid pixels in the same
-   half-degree cell and hour. Low-probability pixels (15, 35) stay at zero, because they are faint.
+  half-degree cell and hour. Low-probability pixels (15, 35) stay at zero, because they are faint.
 4. **Hourly rates.** Each detection is weighted by 1 / (scans that hour). Power is already a rate, so
-   adding scans together would depend on how many arrived.
+  adding scans together would depend on how many arrived.
 5. **Attribute pixels to fires.** A pixel belongs to a fire if it is within 5 km of its final perimeter.
 6. **Connected spread.** A pixel counts toward a fire's reach only once it is within 6 km of the footprint
-   grown outward from the official origin. Results are stable from 5 to 8 km.
+  grown outward from the official origin. Results are stable from 5 to 8 km.
+
+
 
 ## Known limits
 
 - **No power value for 37% of fire pixels.** The share of pixels flagged cloud-contaminated stays around 30–46%
-  through the day, then falls to about 1% at sunset. That abrupt change points to a cloud test that only runs in
-  daylight, but this is inferred from the data rather than confirmed in NOAA's algorithm documents.
+through the day, then falls to about 1% at sunset. That abrupt change points to a cloud test that only runs in
+daylight, but this is inferred from the data rather than confirmed in NOAA's algorithm documents.
 - **Gap-filled power is an estimate.** It assumes a cloud-flagged pixel burns like its neighbours. It removes most
-  of the false evening peak, but a small notch remains on some days.
+of the false evening peak, but a small notch remains on some days.
 - **Smoke and cloud hide fire.** An hour with few detections may be obscured rather than quiet.
 - **Pixels are about 3 km wide here,** so small steps in distance are not meaningful, and small fires can be missed.
 - **Fires are a chosen subset.** Graph 6 uses nine large fires with one identifiable start. Complexes that merged
-  from many starts, such as Crosswhite, appear only under All West. Biscar is left out because its recorded origin
-  falls outside its own perimeter.
+from many starts, such as Crosswhite, appear only under All West. Biscar is left out because its recorded origin
+falls outside its own perimeter.
+
+
 
 ## Files
 
@@ -138,3 +150,4 @@ dsc106-project-3/
 │   └── build_fires.py         detections CSV -> fires.json
 └── requirements.txt
 ```
+
