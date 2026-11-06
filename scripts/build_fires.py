@@ -6,8 +6,9 @@ Inputs
   <detections>_scans.csv  from extract_fdc.py
   <perimeters>.geojson    NIFC WFIGS final perimeters (see README)
 
-Output
-  data/fires.json
+Outputs
+  data/fires.json         hourly series and spread runs (small, loaded first)
+  data/pixels.json        every fire pixel by solar hour, for the maps (larger)
 
 Processing, in order
   1. Persistence   drop a pixel unless it fires again within two hours. One-off
@@ -26,6 +27,8 @@ Processing, in order
                    fire's final perimeter (nearest perimeter wins).
   6. Spread        great-circle distance from the official point of origin, as a
                    running maximum of the footprint connected to that origin.
+  7. Pixel map     one row per pixel per solar hour: how many scans saw it and
+                   its mean power, so the page can draw the fire hour by hour.
 """
 import argparse
 import json
@@ -42,6 +45,7 @@ LINK_KM = 6.0            # about two pixels. Results are stable from 5 to 8 km; 
 MERGE_LAG_H = 6          # a pixel burning this long before linking came from another start
 KM_PER_DEG = 111.32
 EARTH_RADIUS_KM = 6371.0
+PERIM_SIMPLIFY_DEG = 0.004  # about 400 m, enough for an outline under the pixels
 CLOUD_CODES = (12, 32)   # cloud-contaminated, no FRP, eligible for gap fill
 LOW_CODES = (15, 35)     # low probability, no FRP, left at zero
 
@@ -183,11 +187,39 @@ def spread(d, perim):
     return pts, len(pending)
 
 
+def pixel_table(d, fire_ids):
+    """Unique pixel positions and, per solar hour, which of them burned.
+
+    Returns (pixels, hours):
+      pixels  flat [lat * 1e4, lon * 1e4, fire index or -1, ...]
+      hours   one flat list per solar hour of [pixel index, scans seen, MW, ...]
+              where MW > 0 is reported power, MW < 0 is a gap-filled estimate
+              and 0 means no value (low-probability pixel).
+    """
+    pos = d.groupby(["lat", "lon"], sort=True).fire.first()
+    index = {k: i for i, k in enumerate(pos.index)}
+    fire_pos = {fid: i for i, fid in enumerate(fire_ids)}
+    pixels = []
+    for (lat, lon), fire in pos.items():
+        pixels += [int(round(lat * 1e4)), int(round(lon * 1e4)), fire_pos.get(fire, -1)]
+
+    d = d.assign(pix=[index[k] for k in zip(d.lat, d.lon)])
+    g = d.groupby(["solar_idx", "pix"]).agg(scans=("time", "size"), reported=("frp_mw", "mean"),
+                                           filled=("frp_filled", "mean"))
+    mw = g.reported.round().where(g.reported.notna(), -g.filled.round())
+    g["mw"] = mw.fillna(0).astype(int)
+    hours = [[] for _ in range(int(d.solar_idx.max()) + 1)]
+    for (h, pix), row in zip(g.index, g[["scans", "mw"]].itertuples(index=False)):
+        hours[h] += [int(pix), int(row.scans), int(row.mw)]
+    return pixels, hours
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--detections", required=True, help="path without extension")
     ap.add_argument("--perimeters", required=True)
     ap.add_argument("--out", default="data/fires.json")
+    ap.add_argument("--pixels-out", default="data/pixels.json")
     args = ap.parse_args()
 
     det = pd.read_csv(f"{args.detections}.csv", parse_dates=["time"])
@@ -216,8 +248,11 @@ def main():
         f, p = d[d.fire == fid], perims[name]
         series.append(dict(id=fid, name=label, place=place, rows=hourly_rows(f)))
         pts, unlinked = spread(f, p)
+        outline = shapely.simplify(p["geom"], PERIM_SIMPLIFY_DEG)
         runs.append(dict(id=fid, name=label, place=place, acres=round(p["acres"]), cause=p["cause"],
-                         discovered=p["discovered"].strftime("%Y-%m-%dT%H:%MZ"), pts=pts, unlinked=unlinked))
+                         discovered=p["discovered"].strftime("%Y-%m-%dT%H:%MZ"), pts=pts, unlinked=unlinked,
+                         origin=[round(p["lon"], 4), round(p["lat"], 4)],
+                         perimeter=json.loads(shapely.to_geojson(shapely.set_precision(outline, 1e-4)))))
 
     meta = dict(satellite="GOES-18", product="ABI-L2-FDCC", bbox=[-125, 35, -110, 49.5],
                 start=scans.time.min().strftime("%Y-%m-%d"), end=scans.time.max().strftime("%Y-%m-%d"),
@@ -226,7 +261,12 @@ def main():
                 noFrpShare=round(float(d.frp_mw.isna().mean()), 3))
     with open(args.out, "w") as f:
         json.dump(dict(meta=meta, series=series, spread=runs), f, separators=(",", ":"))
+    pixels, hours = pixel_table(d, [fid for fid, _, _, _ in FIRES])
+    with open(args.pixels_out, "w") as f:
+        json.dump(dict(t0=meta["t0"], hours=hours, fires=[fid for fid, _, _, _ in FIRES], pixels=pixels),
+                  f, separators=(",", ":"))
     print(json.dumps(meta))
+    print(f"{len(pixels) // 3} pixel positions, {sum(len(h) for h in hours) // 3} pixel-hours -> {args.pixels_out}")
     for r in runs:
         last = r["pts"][-1] if r["pts"] else None
         merges = [p[:2] for p in r["pts"] if p[3]]

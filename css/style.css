@@ -10,6 +10,8 @@
   --nopower: #b9b2aa;
   --context: #a29a93;
   --night: rgba(60, 60, 90, .07);
+  --land: #f1eeea;
+  --burned: #d8cfc5;
   --font-display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
@@ -21,6 +23,7 @@
     --line: #36312d; --grid: #2c2825; --ember: #f07a45;
     --ember-wash: rgba(240, 122, 69, .14);
     --nopower: #6f6862; --context: #7d756e; --night: rgba(160, 170, 220, .07);
+    --land: #1b1917; --burned: #453c35;
   }
 }
 
@@ -29,6 +32,7 @@
   --line: #36312d; --grid: #2c2825; --ember: #f07a45;
   --ember-wash: rgba(240, 122, 69, .14);
   --nopower: #6f6862; --context: #7d756e; --night: rgba(160, 170, 220, .07);
+  --land: #1b1917; --burned: #453c35;
 }
 
 * { box-sizing: border-box; }
@@ -172,6 +176,45 @@ button:focus-visible, select:focus-visible, tr:focus-visible, .hit:focus-visible
 .swatch-nopower { background: var(--nopower); }
 .swatch-night { background: var(--night); border: 1px solid var(--line); }
 .swatch-ring { border: 2px solid var(--muted); border-radius: 50%; background: var(--surface); }
+.swatch-burned { background: var(--burned); }
+.swatch-origin { border: 1.5px solid var(--fg); border-radius: 50%; background: var(--surface); width: 11px; height: 11px; }
+
+/* Maps (graphs 1 and 3) */
+.map-frame { fill: var(--surface); stroke: var(--line); }
+.state { fill: var(--land); stroke: var(--line); stroke-width: 1; }
+.study-area { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 4; opacity: .8; }
+.perimeter { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 3; stroke-linejoin: round; }
+.burned { fill: var(--burned); pointer-events: none; }
+.pixel { stroke: var(--surface); }
+.pixel.power { fill: var(--ember); }
+.pixel.nopower { fill: var(--nopower); }
+.origin-ring { fill: var(--surface); stroke: var(--fg); stroke-width: 1.5; pointer-events: none; }
+.chart text.origin-label { fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.chart text.map-caption { fill: var(--fg); font-weight: 500; pointer-events: none; }
+.scale-bar line { stroke: var(--fg); stroke-width: 1.5; }
+.count-area { fill: var(--nopower); opacity: .35; }
+.count-line { fill: none; stroke: var(--fg); stroke-width: 1.5; stroke-linejoin: round; }
+.hour-marker { stroke: var(--ember); stroke-width: 1.5; pointer-events: none; }
+
+.player { display: flex; align-items: center; gap: 12px; }
+.play {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.play:hover { border-color: var(--muted); }
+.play svg { fill: currentColor; }
+.play .icon-pause, .play[aria-pressed="true"] .icon-play { display: none; }
+.play[aria-pressed="true"] .icon-pause { display: block; }
+.player input[type="range"] { flex: 1; min-width: 0; accent-color: var(--ember); }
+.player output { font-family: var(--font-mono); font-size: 12px; color: var(--muted); min-width: 17ch; text-align: right; font-variant-numeric: tabular-nums; }
 
 .hint { margin: 0; font-size: 13px; color: var(--muted); }
 
@@ -225,4 +268,6 @@ button:focus-visible, select:focus-visible, tr:focus-visible, .hit:focus-visible
 @media (max-width: 760px) {
   .spread-layout { grid-template-columns: minmax(0, 1fr); }
   .card { padding: 14px; }
+  .player { flex-wrap: wrap; }
+  .player output { flex: 1; text-align: left; }
 }

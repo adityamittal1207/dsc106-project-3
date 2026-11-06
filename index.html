@@ -14,7 +14,7 @@
     <header>
       <p class="eyebrow">DSC 106 &middot; Project 3 &middot; Checkpoint &middot; GOES fire detections</p>
       <h1>Wildfire across the West, hour by hour</h1>
-      <p class="lede">Exploring what a geostationary satellite sees of a fire season: how much power the fires put out, what time of day they burn, and how far they run.</p>
+      <p class="lede">Exploring what a geostationary satellite sees of a fire season: where the fires were, how much power they put out, what time of day they burn, and how far they run.</p>
       <p class="note" id="data-note"></p>
     </header>
 
@@ -25,6 +25,52 @@
       </label>
       <p class="scope" id="scope-label" aria-live="polite"></p>
     </div>
+
+    <section class="card" aria-labelledby="g1-title">
+      <div class="card-head">
+        <span class="num">1</span>
+        <h2 id="g1-title">Where was the fire at its peak hour?</h2>
+      </div>
+      <p class="sub">Every fire pixel the satellite saw during the hour of highest power in the selected window, drawn over all the ground that burned earlier in that window. Each shape is one satellite pixel at its true footprint, about 2 by 3 km here. On the regional map, burning pixels are enlarged so they stay visible.</p>
+      <div class="legend">
+        <span><i class="swatch swatch-power"></i>Fire pixel with a power value</span>
+        <span><i class="swatch swatch-nopower"></i>Fire pixel, no power value</span>
+        <span><i class="swatch swatch-burned"></i>Burned earlier in the window</span>
+        <span><i class="swatch swatch-origin"></i>Official point of origin</span>
+      </div>
+      <div id="snapshot" class="chart map"></div>
+      <p class="hint">Hover a pixel for its power. Choose a fire above to zoom in on its final perimeter.</p>
+      <p class="finding" id="snapshot-finding"></p>
+    </section>
+
+    <section class="card" aria-labelledby="g2-title">
+      <div class="card-head">
+        <span class="num">2</span>
+        <h2 id="g2-title">How many fire pixels did the satellite see each hour?</h2>
+      </div>
+      <p class="sub">Average fire pixels per scan in each solar hour. A count measures how much ground was burning hot enough to detect, not how hard it burned; graph 4 shows the power.</p>
+      <div id="counts" class="chart"></div>
+      <p class="hint">Click or drag across the chart to move the map in graph 3 to that hour.</p>
+      <p class="finding" id="counts-finding"></p>
+    </section>
+
+    <section class="card" aria-labelledby="g3-title">
+      <div class="card-head">
+        <span class="num">3</span>
+        <h2 id="g3-title">Watch the fires move, hour by hour</h2>
+      </div>
+      <p class="sub">The map from graph 1 at any hour. Ground that burned earlier in the window stays grey, so the active front stands out from the scar it leaves behind.</p>
+      <div class="player">
+        <button type="button" class="play" id="play" aria-label="Play" aria-pressed="false">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path class="icon-play" d="M4 2.5v11l9-5.5z"/><path class="icon-pause" d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg>
+        </button>
+        <input type="range" id="hour-slider" min="0" max="0" value="0" step="1" aria-label="Solar hour shown on the map">
+        <output id="hour-label" for="hour-slider"></output>
+      </div>
+      <div id="animap" class="chart map"></div>
+      <p class="hint">Arrow keys step one hour once the slider has focus. Busiest 3 days in graph 4 narrows the slider to a single run.</p>
+      <p class="finding" id="animap-finding"></p>
+    </section>
 
     <section class="card" aria-labelledby="g4-title">
       <div class="card-head">
@@ -43,7 +89,7 @@
         </div>
       </div>
       <div id="intensity" class="chart"></div>
-      <p class="hint">Drag across the lower strip to zoom. The hour-of-day chart below follows the same window.</p>
+      <p class="hint">Drag across the lower strip to zoom. Graphs 1, 2, 3 and 5 follow the same window.</p>
       <p class="finding" id="intensity-finding"></p>
     </section>
 
@@ -84,7 +130,7 @@
           <tbody></tbody>
         </table>
       </div>
-      <p class="hint">Select a line or a table row to focus graphs 4 and 5 on that fire.</p>
+      <p class="hint">Select a line or a table row to focus graphs 1 to 5 on that fire.</p>
       <p class="finding" id="spread-finding"></p>
     </section>
 

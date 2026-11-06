@@ -1,6 +1,6 @@
 # Wildfire across the West, hour by hour
 
-DSC 106 Project 3 checkpoint work: three linked D3 graphs built from NOAA GOES fire
+DSC 106 Project 3 checkpoint work: six linked D3 graphs built from NOAA GOES fire
 detections for the western US, July 13 to August 31, 2026.
 
 ## View the page
@@ -13,7 +13,7 @@ python3 -m http.server 8000
 ```
 
 VS Code Live Server also works. D3 v7 is the only plotting library, and it loads from a CDN.
-`data/fires.json` is already built, so viewing the page needs no Python.
+`data/fires.json`, `data/pixels.json` and `data/states.geojson` are already built, so viewing the page needs no Python.
 
 ## The data
 
@@ -25,7 +25,7 @@ VS Code Live Server also works. D3 v7 is the only plotting library, and it loads
 | Product     | `ABI-L2-FDCC`, Fire/Hot Spot Characterization, CONUS sector, one file every 5 minutes           |
 | Subset used | Pixels flagged as fire inside 125–110°W, 35–49.5°N (Northwest United States and nearby regions) |
 | Period      | 2026-07-13 to 2026-08-31                                                                        |
-| Volume      | 14,391 of 14,400 possible scans, 522,491 fire pixels, 30 MB as CSV, 125 KB as page data         |
+| Volume      | 14,391 of 14,400 possible scans, 522,491 fire pixels, 30 MB as CSV, about 1.2 MB as page data   |
 
 
 Files are stored as `<Product>/<Year>/<Day of Year>/<Hour>/<Filename>`. Each hour holds 12 `FDCC` files
@@ -48,7 +48,8 @@ Both work, but for the West this pairing is better:
 | Variable                           | Meaning                                                                        | Used for                             |
 | ---------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
 | `Mask`                             | Category of each pixel. Fire codes are 10–15 and 30–35                         | Finding fire pixels, cloud flags     |
-| `Power`                            | Fire radiative power in MW. Empty for cloud-flagged and low-probability pixels | Graphs 4 and 5                       |
+| Pixel lat/lon                      | Position on the 56 µrad scan grid                                              | Maps in graphs 1 and 3               |
+| `Power`                            | Fire radiative power in MW. Empty for cloud-flagged and low-probability pixels | Graphs 1 to 5                        |
 | `x`, `y`, `goes_imager_projection` | Scan angles and satellite geometry                                             | Converting to latitude and longitude |
 | Filename `s...`                    | Scan start time                                                                | All time axes                        |
 
@@ -90,9 +91,13 @@ pip install -r requirements.txt
 python scripts/extract_fdc.py --sat 18 --start 2026-07-13T00 --end 2026-09-01T00 \
     --bbox -125 35 -110 49.5 --out data/raw/detections
 
-# 2. Build the page data (under a minute)
+# 2. Build the page data (under a minute). Writes data/fires.json and data/pixels.json
 python scripts/build_fires.py --detections data/raw/detections \
     --perimeters data/perimeters.geojson --out data/fires.json
+
+# 3. Only if the basemap is missing: western state outlines from us-atlas
+curl -sSL -o states-10m.json https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json
+python scripts/build_states.py states-10m.json --out data/states.geojson
 ```
 
 `data/raw/` is gitignored because of its size. To explore other subsets, `extract_fdc.py` also accepts
@@ -116,6 +121,9 @@ time and final outline, and is only used to attribute pixels to fires for Graph 
 5. **Attribute pixels to fires.** A pixel belongs to a fire if it is within 5 km of its final perimeter.
 6. **Connected spread.** A pixel counts toward a fire's reach only once it is within 6 km of the footprint
   grown outward from the official origin. Results are stable from 5 to 8 km.
+7. **Pixel maps.** `data/pixels.json` lists each pixel position once, then for every solar hour which pixels
+  burned, how many scans saw them, and their mean power. The page draws each pixel at its true ground
+  footprint, worked out from the GOES-18 scan geometry, which is about 2 by 3 km and tilted over the West.
 
 
 
@@ -142,12 +150,15 @@ dsc106-project-3/
 ├── css/style.css
 ├── js/main.js                 all D3 code
 ├── data/
-│   ├── fires.json             what the page loads
+│   ├── fires.json             hourly series and spread runs (graphs 2, 4, 5, 6)
+│   ├── pixels.json            fire pixels by solar hour (graphs 1 and 3)
+│   ├── states.geojson         western state outlines for the maps
 │   ├── perimeters.geojson     NIFC perimeters (input to the build)
 │   └── raw/                   detection CSVs (gitignored)
 ├── scripts/
 │   ├── extract_fdc.py         S3 -> detections CSV
-│   └── build_fires.py         detections CSV -> fires.json
+│   ├── build_fires.py         detections CSV -> fires.json, pixels.json
+│   └── build_states.py        us-atlas TopoJSON -> states.geojson
 └── requirements.txt
 ```
 
