@@ -214,11 +214,14 @@ button:focus-visible, select:focus-visible, tr:focus-visible, .hit:focus-visible
 .play .icon-pause, .play[aria-pressed="true"] .icon-play { display: none; }
 .play[aria-pressed="true"] .icon-pause { display: block; }
 .player input[type="range"] { flex: 1; min-width: 0; accent-color: var(--ember); }
-.player output { font-family: var(--font-mono); font-size: 12px; color: var(--muted); min-width: 17ch; text-align: right; font-variant-numeric: tabular-nums; }
+.player output { font-family: var(--font-mono); font-size: 12px; color: var(--muted); min-width: 19ch; text-align: right; font-variant-numeric: tabular-nums; }
 
 .hint { margin: 0; font-size: 13px; color: var(--muted); }
 
+/* Temporarily hidden for the checkpoint. Delete the display line to show the findings again.
+   The JS still fills these in, so keep the elements in the HTML. */
 .finding {
+  display: none;
   margin: 0;
   padding-top: 10px;
   border-top: 1px solid var(--line);

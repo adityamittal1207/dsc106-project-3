@@ -197,9 +197,13 @@ function mapHour() {
   return state.hour;
 }
 
-function hourTitle(i) {
+function hourStamp(i) {
   const d = hourDate(i);
-  return `${fmtDay(d)}, ${fmtHour(d)} solar${isNight(i % 24) ? " (night)" : ""}`;
+  return `${fmtDay(d)}, ${fmtHour(d)} solar`;
+}
+
+function hourTitle(i) {
+  return `${hourStamp(i)}${isNight(i % 24) ? " (night)" : ""}`;
 }
 
 /* d3 wants polygon rings clockwise; GeoJSON from shapely is the other way. */
@@ -538,7 +542,7 @@ function createPlayer(animap, counts) {
     slider.min = a;
     slider.max = b - 1;
     slider.value = h;
-    label.value = hourTitle(h);
+    label.value = hourStamp(h);
     updateAnimapFinding(animap.renderHour(h), h);
     counts.moveMarker();
   }
