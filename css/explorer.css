@@ -2,7 +2,16 @@
 
 body.explorer main { max-width: 1320px; gap: 14px; padding-top: 28px; }
 body.explorer .lede { max-width: 84ch; font-size: 16px; }
-#writeup:empty { display: none; }
+#writeup {
+  max-width: 78ch;
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding-top: 18px;
+}
+#writeup h2, #writeup h3 { font-family: var(--font-display); line-height: 1.2; }
+#writeup h2 { margin: 0 0 14px; font-size: 25px; }
+#writeup h3 { margin: 18px 0 6px; font-size: 19px; }
+#writeup p { margin: 0 0 10px; }
 .hint.how { text-align: center; }
 
 /* The stage is dark in both themes, so fire reads as light on a night landscape. */
