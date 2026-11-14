@@ -2,7 +2,15 @@
 
 body.explorer main { max-width: 1320px; gap: 14px; padding-top: 28px; }
 body.explorer .lede { max-width: 84ch; font-size: 16px; }
-#writeup:empty { display: none; }
+#writeup {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding-top: 18px;
+}
+#writeup h2, #writeup h3 { font-family: var(--font-display); line-height: 1.2; }
+#writeup h2 { margin: 0 0 14px; font-size: 25px; }
+#writeup h3 { margin: 18px 0 6px; font-size: 19px; }
+#writeup p { margin: 0 0 10px; }
 .hint.how { text-align: center; }
 
 /* The stage is dark in both themes, so fire reads as light on a night landscape. */
@@ -45,7 +53,7 @@ body.explorer .lede { max-width: 84ch; font-size: 16px; }
 .m-labels text { font-family: var(--font-mono); font-size: 11px; fill: var(--map-muted); paint-order: stroke; stroke: rgba(0, 0, 0, .75); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
 .m-labels .state-label { letter-spacing: .16em; text-transform: uppercase; fill: rgba(255, 255, 255, .34); stroke: none; }
 .m-labels .city circle { fill: var(--map-muted); }
-.m-labels .fire-label { fill: var(--map-text); font-weight: 500; font-size: 12px; }
+.m-labels .fire-label { fill: var(--map-text); font-weight: 500; font-size: 12px; cursor: pointer; pointer-events: all; }
 .m-labels .origin { fill: rgba(0, 0, 0, .55); stroke: var(--map-text); stroke-width: 1.5; cursor: pointer; pointer-events: all; }
 .m-labels .fire.dim { opacity: .45; }
 .m-labels .reach-label { fill: #fff; font-weight: 500; }

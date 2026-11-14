@@ -267,11 +267,12 @@ function createMap() {
     });
 
     fireLabels.selectAll("g").data(runs, r => r.id).join(enter => {
-      const g = enter.append("g").attr("class", "fire");
-      g.append("circle").attr("class", "origin").attr("r", 4.5)
+      // The whole marker (ring and name) selects the fire, so readers can click the name they see.
+      const g = enter.append("g").attr("class", "fire")
         .on("click", (event, r) => setFire(S.fire === r.id ? null : r.id))
         .on("pointerenter", (event, r) => highlight(r.id))
         .on("pointerleave", () => highlight(null));
+      g.append("circle").attr("class", "origin").attr("r", 4.5);
       g.append("text").attr("class", "fire-label").attr("y", 4).text(r => r.name);
       return g;
     }).select("text")

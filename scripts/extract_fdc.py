@@ -84,7 +84,8 @@ def extract(buf, bbox):
     """Return (rows, status) for one in-memory .nc file."""
     west, south, east, north = bbox
     with netCDF4.Dataset("mem.nc", memory=buf) as nc:
-        mask = nc["Mask"][:].filled(-1)
+        # Cast before filling: some files store these as uint8, which cannot hold -1.
+        mask = nc["Mask"][:].astype(np.int16).filled(-1)
         rows_i, cols_i = np.nonzero(np.isin(mask, FIRE_CODES))
         if rows_i.size == 0:
             return [], 0
@@ -94,7 +95,7 @@ def extract(buf, bbox):
         rows_i, cols_i, lat, lon = rows_i[keep], cols_i[keep], lat[keep], lon[keep]
         pick = lambda name: nc[name][:][rows_i, cols_i].astype(float).filled(np.nan)
         frp, temp, area = pick("Power"), pick("Temp"), pick("Area")
-        dqf = nc["DQF"][:][rows_i, cols_i].filled(-1)
+        dqf = nc["DQF"][:][rows_i, cols_i].astype(np.int16).filled(-1)
         codes = mask[rows_i, cols_i]
     rows = [
         [round(float(lat[i]), 4), round(float(lon[i]), 4),
